@@ -38,14 +38,15 @@ void client_init(){
 		exit(-1);
 	}
 	
-	cout<<"What is your name: "; 
-	string client_name; cin>>client_name; //TODO: getline(cin, client_name)
+	cout<<"What is your name: "; fflush(stdout);
+	string client_name; cin>>client_name;
+	// cout<<"client_name: "<<client_name<<endl;
 	send_str(client_name, client_socket);
 
 	int client_id;
 	ssize_t bytesRead = recv(client_socket, &client_id, sizeof(client_id), 0);
 	if(bytesRead<=0){
-		cout<<"Error in getting client_id"<<endl;
+		cerr<<"Error in getting client_id"<<endl;
 		return;
 	}
 	client_node.id = client_id;
@@ -63,7 +64,7 @@ void recv_messages(){
 		string print_str = recv_str(client_socket);
 		//cout<<print_str<<" received"<<endl;
 		if(print_str=="#NULL"){
-			cout<<"Error detected in client_name"<<endl;
+			cerr<<"Error detected in client_name"<<endl; fflush(stdout);
 			t_recv_messages.detach();	
 			t_send_messages.detach();
 			close(client_socket);
@@ -80,7 +81,9 @@ void send_messages(){
 		// char str[MAX_LEN];
 		// cin.getline(str,MAX_LEN);
 		// send(client_socket,str,sizeof(str),0);
-		string msg_to_send; cin>>msg_to_send; //TODO: use getline()
+		// string msg_to_send; cin>>msg_to_send; //TODO: use getline()
+		cin.ignore(numeric_limits<streamsize>::max(), '\n');
+		string msg_to_send; getline(cin, msg_to_send, '\n'); 
 		string printstr = find_color(client_node.id) + (client_node.name) + ": " + reset_col + msg_to_send;
 
 		// cout<<"msg_to_send: "<<msg_to_send<<endl;
