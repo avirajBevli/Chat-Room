@@ -44,16 +44,15 @@ void server_init(){
 		perror("listen error: ");
 		exit(-1);
 	}
-	cout<<colors[NUM_COLORS-1]<<"\n\t  ====== Welcome Server! ======   "<<endl<<reset_col;
+	cout<<colors[NUM_COLORS-1]<<"\n\t  ====== Server up and running ======   "<<endl<<reset_col;
 
 	signal(SIGINT, catch_ctrl_c);
 }
 
 void handle_client(int client_id, int client_socket, struct sockaddr_in client_socket_addr){
 	string client_name = recv_str(client_socket);
-	string printstr = find_color(client_id) + client_name + reset_col + " has joined ";
+	string printstr = find_color(client_id) + client_name + " has joined " + reset_col;
 	shared_print(printstr);
-	
 	send(client_socket, &client_id, sizeof(client_id), 0); // send the client it's client_id
 	{ 	// send new client joining info to all other clients
 		lock_guard<mutex> guard(clients_mutex);	// ensure that the whole message goes as one message in socket; otherwise messages from other server threads can get mixed up in the socket stream
