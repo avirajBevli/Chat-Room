@@ -43,11 +43,11 @@ string recv_str(int socket_id){
     ssize_t bytesRead = recv(socket_id, &msglen, sizeof(msglen), 0);
     if (bytesRead == -1) {
         cout << "Failed to receive the integer value." << endl;
-        return "#NULL1";
+        return "#NULL";
     }
     else if(bytesRead == 0){
     	cout << "read 0 bytes"<<endl;
-    	return "#NULL0";
+    	return "#NULL";
     }
 
     string received_string;
@@ -57,17 +57,18 @@ string recv_str(int socket_id){
 		ssize_t bytesRead = recv(socket_id, msg_temp, sizeof(msg_temp),0);
 		if(bytesRead == -1){
 			cout << "in while, Failed to receive the integer value." << endl;
-        	return "#NULL1";
+        	return "#NULL";
 		}
 		else if(bytesRead == 0){
 	    	cout << "in while, read 0 bytes"<<endl;
-	    	return "#NULL0";
+	    	return "#NULL";
 	    }
 		string str_temp(msg_temp);
 		received_string += str_temp;
 		msglenrecvd+=(str_temp.size());
     }
     // cout<<"msg received: "<<received_string<<"."<<" from "<<socket_id<<endl;
+    fflush(stdout);
     return received_string;
 }
 
@@ -86,14 +87,7 @@ void send_str(string str, int socket_id){
             return;
         }
         totalSent += bytesSent;
+        // cout<<"totalSent:"<<totalSent<<"  ";
     }
-
-	// const char* messageData = str.c_str();
-	// size_t messageLength = str.length();
-	// ssize_t bytesSent = send(socket_id, messageData, messageLength, 0);
-	// if (bytesSent == -1) {
-	// 	cout<<"Could not send data!"<<endl;
-	// 	return;
-	// }
-	// cout<<"msg sent : "<<str<<"."<<" to "<<socket_id<<endl;
+	fflush(stdout);
 }
