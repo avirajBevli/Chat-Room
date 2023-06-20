@@ -1,7 +1,9 @@
 #include "headers.h"
+Node client_node;
 int client_socket;
 struct sockaddr_in server_socket_addr; 
 thread t_recv_messages;
+thread t_send_messages;
 
 void catch_ctrl_c(int signal) {
 	close(client_socket);
@@ -27,13 +29,20 @@ void client_init(){
 	}
 	cout<<colors[NUM_COLORS-2]<<"\n\t  ====== Connected to Server! ======   "<<endl<<reset_col;
 
-	// char client_name[MAX_LEN];
-	// cout<<"Name? ";
-	// cin.getline(client_name, MAX_LEN);
-	// send(client_socket,client_name,sizeof(client_name),0);
-
-	cout<<"Name? "; string client_name; cin>>client_name;
+	cout<<"Name? "; 
+	string client_name; cin>>client_name; //TODO: getline(cin, client_name)
 	send_str(client_name, client_socket);
+
+
+	int client_id;
+	ssize_t bytesRead = recv(client_socket, &client_id, sizeof(client_id), 0);
+	if(bytesRead<=0){
+		cout<<"Error in getting client_id"<<endl;
+		return;
+	}
+	client_node.id = client_id;
+	client_node.socket = client_socket;
+	client_node.name = client_name;
 	signal(SIGINT, catch_ctrl_c);
 }
 
@@ -41,12 +50,8 @@ void client_init(){
 void recv_messages(){
 	while(1){
 		string print_str = recv_str(client_socket);
-		if(print_str=="#NULL0"){
-			cout<<"Error0 detected in client_name"<<endl;
-			return;
-		}
-		else if(print_str=="#NULL1"){
-			cout<<"Error1 detected in client_name"<<endl;
+		if(print_str=="#NULL"){
+			cout<<"Error detected in client_name"<<endl;
 			return;
 		}
 		cout<<print_str<<endl;
@@ -54,34 +59,12 @@ void recv_messages(){
 	}	
 }
 
-// // keep receiving messages from server
-// void recv_messages(){
-// 	while(1){
-// 		char recvmsg[MAX_LEN];
-// 		int bytes_received = recv(client_socket, recvmsg, sizeof(recvmsg), 0);
-// 		if(bytes_received==-1){
-// 			// handle recieve error
-// 			cout<<"Hanlding receive error"<<endl;
-// 			break;
-// 		}
-// 		if(bytes_received==0){ // connection closed by server
-// 			cout<<"Connection closed by server"<<endl;
-// 			break;
-// 		}
-
-// 		string name; string name_col;
-// 		int i=0;
-// 		for(i=0;i<MAX_LEN;i++){
-// 			if(recvmsg[i]==','){
-// 				i++;
-// 				break;
-// 			}
-// 			name+=recvmsg[i];
-// 		}
-// 		for(i;i<MAX_LEN;i++){
-// 			name_col+=recvmsg[i];
-// 		}
-// 		cout<<name_col<<name<<reset_col<<" entered the chat"<<endl;
-// 		fflush(stdout);
-// 	}	
-// }
+// keep sending messages to server
+void send_messages(){
+	while(1){
+		string msg_to_send; 
+		getline(cin, msg_to_send);
+		string printstr = find_color(client_node.id) + (client_node.name) + ": " + reset_col + msg_to_send;
+		send_str(printstr, client_socket);
+	}	
+}
