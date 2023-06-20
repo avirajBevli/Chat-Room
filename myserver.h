@@ -51,10 +51,11 @@ void server_init(){
 
 void handle_client(int client_id, int client_socket, struct sockaddr_in client_socket_addr){
 	string client_name = recv_str(client_socket);
-	string printstr = find_color(client_id) + client_name + reset_col + " has joined";
+	string printstr = find_color(client_id) + client_name + reset_col + " has joined ";
 	shared_print(printstr);
-
-	{
+	
+	send(client_socket, &client_id, sizeof(client_id), 0); // send the client it's client_id
+	{ 	// send new client joining info to all other clients
 		lock_guard<mutex> guard(clients_mutex);	// ensure that the whole message goes as one message in socket; otherwise messages from other server threads can get mixed up in the socket stream
 		for(int i=0;i<clients.size();i++){
 			if(clients[i].id == client_id) continue;
@@ -67,31 +68,21 @@ void handle_client(int client_id, int client_socket, struct sockaddr_in client_s
 		lock_guard<mutex> guard(clients_mutex);
 		clients.push_back(node);
 	}
-	// close(client_socket);
+
+	// listen for messages sent by this client to then broadcast to the other clients
+	while(1){
+		string in_msg = recv_str(client_socket);
+		if(in_msg=="#NULL"){
+			cout<<"Error detected in message received from client"<<endl;
+			break;
+		}
+		{ 	// send client's message to all other clients
+			lock_guard<mutex> guard(clients_mutex);	// ensure that the whole message goes as one message in socket; otherwise messages from other server threads can get mixed up in the socket stream
+			for(int i=0;i<clients.size();i++){
+				if(clients[i].id == client_id) continue;
+				send_str(in_msg, clients[i].socket);
+			}
+		}
+	}
+	close(client_socket);
 }
-
-// void handle_client(int client_id, int client_socket, struct sockaddr_in client_socket_addr){
-// 	char client_name[MAX_LEN];
-// 	recv(client_socket, client_name, sizeof(client_name), 0);
-// 	string printstr = find_color(client_id) + client_name + reset_col + " had joined";
-// 	shared_print(printstr);
-
-// 	// send message about arrival of new client to all other clients
-// 	for(int i=0;i<clients.size();i++){
-// 		if(clients[i].id == client_id) continue;
-// 		//cout<<"sending "<<client_name<<" to "<<clients[i].name<<endl;
-// 		//send(clients[i].socket,client_name,sizeof(client_name),0);
-// 		string to_send_str = client_name;
-// 		to_send_str = to_send_str + "," + find_color(clients[i].id);
-// 		const char* to_send = to_send_str.c_str(); 
-// 		send(clients[i].socket,to_send,sizeof(client_name),0);
-// 	}
-// 	// std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-// 	{ 	// update clients list
-// 		string name(client_name);
-// 		Node node(client_id, client_socket, name, client_socket_addr);
-// 		lock_guard<mutex> guard(add_client_to_list_mutex);
-// 		clients.push_back(node);
-// 	}
-// 	close(client_socket);
-// }
